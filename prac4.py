@@ -52,6 +52,7 @@ upTime = 0
 monEnabled = true
 monDelay = 0.5
 
+###---BUTTONS---###
 # Interrupt Methods
 def resetPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
@@ -93,13 +94,17 @@ def stopPush(channel):
 
 def displayPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Clean the console
 		os.system('clear')
-		print("Display button pushed")
-		print(mcp.read_adc(1))
+		print("Display button pushed")		
+
+###-------------###
+
 
 def timer():
 	if (monEnable):
-		#Stuff
+		#add store current state
+		addToBuffer(getCurrentState)
 
 	
 	#start timer in new thread, delay and recall function
@@ -107,32 +112,40 @@ def timer():
 	upTime += monDelay
 
 def getADCValue(chan):
+	#return value from ADC channel
 	return mcp.read_adc(chan)
 
 def convertPot(value):
 
-	return 0
+	return value
 
 def convertTemp(value):
 
-	return 0
+	return value
 
 def convertLDR(value):
 
-	return 0
+	return value
 
 def getCurrentState():
+	#get current time
 	currentDT = datetime.datetime.now()
+
 	realTime = currentDT.strftime("%H:%M:%S")
 	timerValue = upTime
 	potValue = convertPot(getADCValue(POT))
 	tempValue = convertTemp(getADCValue(TEMP))
 	ldrValue = convertLDR(getADCValue(LDR))
 
+	#return current parameters
 	return [realTime, timerValue, potValue, tempValue, ldrValue]
 	
-
-
+def addToBuffer(state):
+	#shift values in array
+	for i in range(0, 4):
+		readBuffer[i] = readBuffer[i+1]
+	#add new value
+	readBuffer[4] = state
 	
 
 # Interrupt Event Detection
