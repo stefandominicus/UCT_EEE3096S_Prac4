@@ -94,7 +94,7 @@ def displayPush(channel):
 def timer():
 	if (monEnable):
 		#Stuff
-
+		print("testing the timer", upTime)
 	
 	#start timer in new thread, delay and recall function
 	threading.Timer(monDelay, timer).start()
