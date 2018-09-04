@@ -8,6 +8,7 @@
 import RPi.GPIO as GPIO
 import Adafruit_MCP3008
 import time
+import threading
 import os
 
 ###---SETUP---###
@@ -41,6 +42,7 @@ mcp = Adafruit_MCP3008.MCP3008(clk=SPICLK, cs=SPICS, mosi=SPIMOSI, miso=SPIMISO)
 # Global Variables
 values = [0]*8 #data from ADC
 
+upTime = 0
 monEnabled = true
 monDelay = 0.5
 
@@ -88,6 +90,16 @@ def displayPush(channel):
 		os.system('clear')
 		print("Display button pushed")
 		print(mcp.read_adc(1))
+
+def timer():
+	if (monEnable):
+		#Stuff
+
+	
+	#start timer in new thread, delay and recall function
+	threading.Timer(monDelay, timer).start()
+	upTime += monDelay
+	
 
 # Interrupt Event Detection
 GPIO.add_event_detect(resetPin, GPIO.FALLING, callback=resetPush, bouncetime=100)
