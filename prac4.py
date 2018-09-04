@@ -38,21 +38,48 @@ GPIO.setup(SPICS, GPIO.OUT)
 
 mcp = Adafruit_MCP3008.MCP3008(clk=SPICLK, cs=SPICS, mosi=SPIMOSI, miso=SPIMISO) #ADC object
 
+# Global Variables
 values = [0]*8 #data from ADC
+
+monEnabled = true
+monDelay = 0.5
 
 # Interrupt Methods
 def resetPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Reset the timer
+		upTime = 0
+		# Clean the console
 		os.system('clear')
 		print("Reset button pushed")
 
+
 def frequencyPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Change the monitoring frequency
+		#---Might need to fiddle with the timer here...?---#
+		switch (monitoringDelay) {
+			case (0.5):
+				monitoringDelay = 1
+				break
+			case (1):
+				monitoringDelay = 2
+				break
+			case (2):
+				monitoringDelay = 0.5
+				break
+		}
+		# Clean the console
 		os.system('clear')
 		print("Frequency button pushed")
+		
 
 def stopPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Start/Stop monitoring, leave timer alone
+		monEnabled = !monEnabled
+
+		# Clean the console
 		os.system('clear')
 		print("Stop button pushed")
 
