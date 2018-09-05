@@ -8,7 +8,9 @@
 import RPi.GPIO as GPIO
 import Adafruit_MCP3008
 import time
+import threading
 import os
+import datetime
 
 ###---SETUP---###
 
@@ -38,29 +40,113 @@ GPIO.setup(SPICS, GPIO.OUT)
 
 mcp = Adafruit_MCP3008.MCP3008(clk=SPICLK, cs=SPICS, mosi=SPIMOSI, miso=SPIMISO) #ADC object
 
-values = [0]*8 #data from ADC
+#ADC Inputs
+TEMP = 0
+LDR = 1
+POT = 2
 
+# Global Variables
+readBuffer = [0]*5 #readings to be output
+
+upTime = 0
+monEnabled = true
+monDelay = 0.5
+
+###---BUTTONS---###
 # Interrupt Methods
 def resetPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Reset the timer
+		upTime = 0
+		# Clean the console
 		os.system('clear')
 		print("Reset button pushed")
 
+
 def frequencyPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Change the monitoring frequency
+		#---Might need to fiddle with the timer here...?---#
+		switch (monitoringDelay) {
+			case (0.5):
+				monitoringDelay = 1
+				break
+			case (1):
+				monitoringDelay = 2
+				break
+			case (2):
+				monitoringDelay = 0.5
+				break
+		}
+		# Clean the console
 		os.system('clear')
 		print("Frequency button pushed")
+		
 
 def stopPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Start/Stop monitoring, leave timer alone
+		monEnabled = !monEnabled
+
+		# Clean the console
 		os.system('clear')
 		print("Stop button pushed")
 
 def displayPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+		# Clean the console
 		os.system('clear')
-		print("Display button pushed")
-		print(mcp.read_adc(1))
+		print("Display button pushed")		
+
+###-------------###
+
+
+def timer():
+	if (monEnable):
+		#add store current state
+		addToBuffer(getCurrentState)
+
+	
+	#start timer in new thread, delay and recall function
+	threading.Timer(monDelay, timer).start()
+	upTime += monDelay
+
+def getADCValue(chan):
+	#return value from ADC channel
+	return mcp.read_adc(chan)
+
+def convertPot(value):
+
+	return value
+
+def convertTemp(value):
+
+	return value
+
+def convertLDR(value):
+
+	return value
+
+def getCurrentState():
+	#get current time
+	currentDT = datetime.datetime.now()
+
+	realTime = currentDT.strftime("%H:%M:%S")
+	timerValue = upTime
+	potValue = convertPot(getADCValue(POT))
+	tempValue = convertTemp(getADCValue(TEMP))
+	ldrValue = convertLDR(getADCValue(LDR))
+
+	#return current parameters
+	return [realTime, timerValue, potValue, tempValue, ldrValue]
+	
+def addToBuffer(state):
+	#shift values in array
+	for i in range(0, 4):
+		readBuffer[i] = readBuffer[i+1]
+	#add new value
+	readBuffer[4] = state
+	
 
 # Interrupt Event Detection
 GPIO.add_event_detect(resetPin, GPIO.FALLING, callback=resetPush, bouncetime=100)
