@@ -34,10 +34,11 @@ POT = 2
 
 # General
 state = ["empty"]*5 # Could probably replace "empty" with "" instead
-readBuffer = [state]*5 #readings to be output
-upTime = 0
-monEnabled = True
-monDelay = 0.5
+readBuffer = [state]*5 # Readings to be displayed
+upTime = 0 # Time sice timer was reset
+monEnabled = True # Is the system allowed to record new values
+monDelay = 0.5 # Monitoring interval
+terminating = False # Is the system trying to close
 ###-------------###
 
 ###---SETUP---###
@@ -63,43 +64,45 @@ mcp = Adafruit_MCP3008.MCP3008(clk=SPICLK, cs=SPICS, mosi=SPIMOSI, miso=SPIMISO)
 ###---BUTTONS---###
 # Interrupt Methods
 def resetPush(channel):
-	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+	if (GPIO.input(channel) == GPIO.LOW): # Avoid trigger on button realease
 		# Reset the timer
+		global upTime
 		upTime = 0
 		# Clean the console
 		os.system('clear')
-		print("Reset button pushed")
+		print("Reset button pushed. Timer has been reset.") # DEBUG
 
 def frequencyPush(channel):
-	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+	if (GPIO.input(channel) == GPIO.LOW): # Avoid trigger on button realease
 		# Change the monitoring frequency
-		#---Might need to fiddle with the timer here...?---#
 		global monDelay
 		if (monDelay == 0.5): monDelay = 1
 		elif (monDelay == 1): monDelay = 2
 		elif (monDelay == 2): monDelay = 0.5
 		# Clean the console
 		os.system('clear')
-		print("Frequency button pushed")
+		print("Frequency button pushed. Monitoring interval is now {}s.".format(monDelay)) # DEBUG
 
 def stopPush(channel):
-	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+	if (GPIO.input(channel) == GPIO.LOW): # Avoid trigger on button realease
 		# Start/Stop monitoring, leave timer alone
-		global monEnabled = not monEnabled
+		global monEnabled
+		monEnabled = not monEnabled
 		# Clean the console
 		os.system('clear')
-		print("Stop button pushed")
+		if (monEnabled): print("Start/Stop button pushed. Monitoring resumed.") # DEBUG
+		else: print("Start/Stop button pushed. Monitoring stopped") # DEBUG
 
 def displayPush(channel):
-	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
+	if (GPIO.input(channel) == GPIO.LOW): # Avoid trigger on button realease
 		# Clean the console
 		os.system('clear')
-		print("Display button pushed")
+		#print("Display button pushed") # DEBUG
 		# Display recent entries
-		print("Time\tTimer\tPot\tTemp\tLight")
+		print("{:<15}{:<15}{:<15}{:<15}{:<15}".format("Time", "Timer", "Pot", "Temp", "Light"))
 		for entry in readBuffer:
 			# each entry is a state
-			print(entry[0], "\t", entry[1], "\t", entry[2], "\t", entry[3], "\t", entry[4])
+			print("{:<15}{:<15}{:<15}{:<15}{:<15}".format(entry[0], entry[1], entry[2], entry[3], entry[4]))
 
 # Interrupt Event Detection
 GPIO.add_event_detect(resetPin, GPIO.FALLING, callback=resetPush, bouncetime=100)
@@ -110,14 +113,15 @@ GPIO.add_event_detect(displayPin, GPIO.FALLING, callback=displayPush, bouncetime
 
 ###---TIMER---###
 def timer():
-	if (monEnable):
-		#Stuff
-		print("testing the timer", upTime)
-		#add store current state
-		addToBuffer(getCurrentState)
-	#start timer in new thread, delay and recall function
-	threading.Timer(monDelay, timer).start()
-	upTime += monDelay
+	if (not terminating): # Only continue if the parent thread is still running
+		global upTime
+		if (monEnabled):
+			#print("Testing... UpTime = ", upTime) # DEBUG
+			# Add store current state
+			addToBuffer(getCurrentState())
+		# Start timer in new thread, delay and recall function
+		threading.Timer(monDelay, timer).start()
+		upTime += monDelay
 ###-------------###
 
 ###---ADC---###
@@ -126,25 +130,27 @@ def getADCValue(chan):
 	return mcp.read_adc(chan)
 
 def convertPot(value):
-	voltage = value * (3.3/1023)
-	return str(voltage) + " V"
+	voltage = value * (3.3/1023) # Scale ADC value to a fraction of 3.3V
+	return "{:.2f} V".format(voltage)
 
 def convertTemp(value):
+	# TODO: convert to degrees
 	degrees = value # Use datasheet
-	return str(degrees) + " C"
+	return "{:.1f} C".format(degrees)
 
 def convertLDR(value):
+	# TODO: convert to percentage
 	percentage = value # Use datasheet
-	return str(percentage) + "%"
+	return "{:.0f}%".format(percentage)
 ###-------------###
 
 ###---BUFFER---###
 def getCurrentState():
-	#get current time
-	currentDT = datetime.datetime.now()
+	min, sec = divmod(upTime, 60)
+	hrs, min = divmod(min, 60)
 
-	realTime = currentDT.strftime("%H:%M:%S")
-	timerValue = upTime.strftime("%H:%M:%S") # Not sure if this will work...
+	realTime = datetime.datetime.now().strftime("%H:%M:%S")
+	timerValue = "{:02.0f}:{:02.0f}:{:04.1f}".format(hrs, min, sec)
 	potValue = convertPot(getADCValue(POT))
 	tempValue = convertTemp(getADCValue(TEMP))
 	ldrValue = convertLDR(getADCValue(LDR))
@@ -162,12 +168,15 @@ def addToBuffer(state):
 
 ###---LOOP---###
 try:
+	os.system('clear')
 	print("Ready!")
+	timer()
 	# Keep the program running, waiting for button presses
 	while(1):
 		pass
 except KeyboardInterrupt:
-	print("Finishing")
+	print("losing")
 	# Release all resources being used by this program
+	terminating = True
 	GPIO.cleanup()
 ###-------------###
