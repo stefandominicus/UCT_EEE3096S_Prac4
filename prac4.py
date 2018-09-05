@@ -58,6 +58,7 @@ GPIO.setup(SPICS, GPIO.OUT)
 
 # ADC Object
 mcp = Adafruit_MCP3008.MCP3008(clk=SPICLK, cs=SPICS, mosi=SPIMOSI, miso=SPIMISO) #ADC object
+###-------------###
 
 ###---BUTTONS---###
 # Interrupt Methods
