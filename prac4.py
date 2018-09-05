@@ -10,6 +10,7 @@ import Adafruit_MCP3008
 import time
 import threading
 import os
+import datetime
 
 ###---SETUP---###
 
@@ -39,8 +40,13 @@ GPIO.setup(SPICS, GPIO.OUT)
 
 mcp = Adafruit_MCP3008.MCP3008(clk=SPICLK, cs=SPICS, mosi=SPIMOSI, miso=SPIMISO) #ADC object
 
+#ADC Inputs
+TEMP = 0
+LDR = 1
+POT = 2
+
 # Global Variables
-values = [0]*8 #data from ADC
+readBuffer = [0]*5 #readings to be output
 
 upTime = 0
 monEnabled = true
@@ -99,6 +105,34 @@ def timer():
 	#start timer in new thread, delay and recall function
 	threading.Timer(monDelay, timer).start()
 	upTime += monDelay
+
+def getADCValue(chan):
+	return mcp.read_adc(chan)
+
+def convertPot(value):
+
+	return 0
+
+def convertTemp(value):
+
+	return 0
+
+def convertLDR(value):
+
+	return 0
+
+def getCurrentState():
+	currentDT = datetime.datetime.now()
+	realTime = currentDT.strftime("%H:%M:%S")
+	timerValue = upTime
+	potValue = convertPot(getADCValue(POT))
+	tempValue = convertTemp(getADCValue(TEMP))
+	ldrValue = convertLDR(getADCValue(LDR))
+
+	return [realTime, timerValue, potValue, tempValue, ldrValue]
+	
+
+
 	
 
 # Interrupt Event Detection
