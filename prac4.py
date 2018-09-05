@@ -102,7 +102,6 @@ def displayPush(channel):
 		# Clean the console
 		os.system('clear')
 		print("Display button pushed")
-
 		# Display recent entries
 		print("Time\tTimer\tPot\tTemp\tLight")
 		for entry in readBuffer:
