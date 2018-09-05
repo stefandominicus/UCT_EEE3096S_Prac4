@@ -49,7 +49,7 @@ POT = 2
 readBuffer = [0]*5 #readings to be output
 
 upTime = 0
-monEnabled = true
+monEnabled = True
 monDelay = 0.5
 
 ###---BUTTONS---###
@@ -67,26 +67,18 @@ def frequencyPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
 		# Change the monitoring frequency
 		#---Might need to fiddle with the timer here...?---#
-		switch (monitoringDelay) {
-			case (0.5):
-				monitoringDelay = 1
-				break
-			case (1):
-				monitoringDelay = 2
-				break
-			case (2):
-				monitoringDelay = 0.5
-				break
-		}
+		global monDelay
+		if (monDelay == 0.5): monDelay = 1
+		elif (monDelay == 1): monDelay = 2
+		elif (monDelay == 2): monDelay = 0.5
 		# Clean the console
 		os.system('clear')
 		print("Frequency button pushed")
-		
 
 def stopPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
 		# Start/Stop monitoring, leave timer alone
-		monEnabled = !monEnabled
+		global monEnabled = not monEnabled
 
 		# Clean the console
 		os.system('clear')
@@ -96,8 +88,7 @@ def displayPush(channel):
 	if (GPIO.input(channel) == GPIO.LOW): #avoid trigger on button realease
 		# Clean the console
 		os.system('clear')
-		print("Display button pushed")		
-
+		print("Display button pushed")
 ###-------------###
 
 
@@ -106,7 +97,6 @@ def timer():
 		#add store current state
 		addToBuffer(getCurrentState)
 
-	
 	#start timer in new thread, delay and recall function
 	threading.Timer(monDelay, timer).start()
 	upTime += monDelay
@@ -139,14 +129,13 @@ def getCurrentState():
 
 	#return current parameters
 	return [realTime, timerValue, potValue, tempValue, ldrValue]
-	
+
 def addToBuffer(state):
 	#shift values in array
 	for i in range(0, 4):
 		readBuffer[i] = readBuffer[i+1]
 	#add new value
 	readBuffer[4] = state
-	
 
 # Interrupt Event Detection
 GPIO.add_event_detect(resetPin, GPIO.FALLING, callback=resetPush, bouncetime=100)
