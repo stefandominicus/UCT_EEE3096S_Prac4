@@ -32,6 +32,14 @@ TEMP = 0
 LDR = 1
 POT = 2
 
+# References for LDR lightness %
+LDR_MAX = 1023
+LDR_MIN = 0
+
+# References for Thermister
+T0 = 0,5
+Tc = 10
+
 # General
 state = ["empty"]*5 # Could probably replace "empty" with "" instead
 readBuffer = [state]*5 # Readings to be displayed
@@ -134,13 +142,21 @@ def convertPot(value):
 	return "{:.2f} V".format(voltage)
 
 def convertTemp(value):
-	# TODO: convert to degrees
-	degrees = value # Use datasheet
+	# convert to degrees
+	voltage = value * (3.3/1023)
+
+	degrees = (voltage-V0)/Tc # From datasheet
 	return "{:.1f} C".format(degrees)
 
 def convertLDR(value):
-	# TODO: convert to percentage
-	percentage = value # Use datasheet
+	# convert to percentage
+	percentage = 100*(value - LDR_MIN)/(LDR_MAX-LDR_MIN)
+
+	if (percentage > 100):
+		percentage = 100
+	if (percentage < 0):
+		percentage = 0
+
 	return "{:.0f}%".format(percentage)
 ###-------------###
 
