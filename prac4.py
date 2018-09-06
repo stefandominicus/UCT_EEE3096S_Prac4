@@ -33,12 +33,12 @@ LDR = 1
 POT = 2
 
 # References for LDR lightness %
-LDR_MAX = 1023
-LDR_MIN = 0
+LDR_MAX = 950
+LDR_MIN = 50
 
 # References for Thermister
-T0 = 0,5
-Tc = 10
+V0 = 0.5
+Tc = 0.01
 
 # General
 state = ["empty"]*5 # Could probably replace "empty" with "" instead
@@ -134,7 +134,7 @@ def timer():
 
 ###---ADC---###
 def getADCValue(chan):
-	#return value from ADC channel
+	# Return value from ADC channel
 	return mcp.read_adc(chan)
 
 def convertPot(value):
@@ -142,15 +142,14 @@ def convertPot(value):
 	return "{:.2f} V".format(voltage)
 
 def convertTemp(value):
-	# convert to degrees
+	# Convert to degrees
 	voltage = value * (3.3/1023)
-
-	degrees = (voltage-V0)/Tc # From datasheet
+	degrees = (voltage - V0) / Tc # From datasheet
 	return "{:.1f} C".format(degrees)
 
 def convertLDR(value):
-	# convert to percentage
-	percentage = 100*(value - LDR_MIN)/(LDR_MAX-LDR_MIN)
+	# Convert to percentage
+	percentage = 100 * (value - LDR_MIN) / (LDR_MAX - LDR_MIN)
 
 	if (percentage > 100):
 		percentage = 100
@@ -171,14 +170,14 @@ def getCurrentState():
 	tempValue = convertTemp(getADCValue(TEMP))
 	ldrValue = convertLDR(getADCValue(LDR))
 
-	#return current parameters
+	# Return current parameters
 	return [realTime, timerValue, potValue, tempValue, ldrValue]
 
 def addToBuffer(state):
-	#shift values in array
+	# Shift values in array
 	for i in range(0, 4):
 		readBuffer[i] = readBuffer[i+1]
-	#add new value
+	# Add new value
 	readBuffer[4] = state
 ###-------------###
 
