@@ -126,7 +126,10 @@ def timer():
 		if (monEnabled):
 			#print("Testing... UpTime = ", upTime) # DEBUG
 			# Add store current state
-			addToBuffer(getCurrentState())
+			entry = getCurrentState()
+			addToBuffer(entry)
+			# Print the current state to the console
+			print("{:<15}{:<15}{:<15}{:<15}{:<15}".format(entry[0], entry[1], entry[2], entry[3], entry[4]))
 		# Start timer in new thread, delay and recall function
 		threading.Timer(monDelay, timer).start()
 		upTime += monDelay
